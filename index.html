@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CineStream — Watch Free Movies</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07090e;
+      --surface: #0d1017;
+      --card: #111520;
+      --border: #1c2133;
+      --accent: #e63946;
+      --accent2: #f4a261;
+      --text: #e8eaf0;
+      --muted: #5b6380;
+      --gold: #f4c430;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 66px;
+      background: linear-gradient(to bottom, rgba(7,9,14,.99), transparent);
+      transition: background .3s, border-color .3s;
+      border-bottom: 1px solid transparent;
+    }
+    nav.scrolled { background: rgba(7,9,14,.97); border-bottom-color: var(--border); }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--accent); text-decoration: none; }
+    .logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .search-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 14px;
+      transition: border-color .2s;
+    }
+    .search-bar:focus-within { border-color: var(--accent); }
+    .search-bar input {
+      background: none; border: none; outline: none;
+      color: var(--text); font-size: 13px; width: 180px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-bar svg { color: var(--muted); flex-shrink: 0; }
+
+    /* HERO */
+    .hero {
+      position: relative; height: 100vh; min-height: 580px;
+      display: flex; align-items: flex-end;
+      padding: 0 72px 90px;
+      overflow: hidden;
+    }
+    #hero-bg {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center top;
+      background-repeat: no-repeat;
+      transition: background-image .8s ease;
+      animation: slowZoom 20s ease-in-out infinite alternate;
+    }
+    #hero-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(to right, rgba(7,9,14,1) 0%, rgba(7,9,14,.55) 55%, transparent 100%),
+        linear-gradient(to top, rgba(7,9,14,1) 0%, transparent 55%);
+    }
+    @keyframes slowZoom { from { transform: scale(1.03); } to { transform: scale(1.09); } }
+    .hero-content { position: relative; z-index: 2; max-width: 560px; }
+    .hero-source-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 4px; margin-bottom: 14px;
+      background: var(--accent); color: #fff;
+    }
+    #hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 7vw, 90px);
+      line-height: .93; letter-spacing: 1px; margin-bottom: 16px;
+      animation: fadeUp .7s ease both;
+    }
+    .hero-meta {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 16px; font-size: 13px; color: var(--muted);
+      animation: fadeUp .7s .1s ease both;
+    }
+    .hero-meta .star { color: var(--gold); font-weight: 600; }
+    .dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
+    #hero-desc {
+      font-size: 14px; line-height: 1.75; color: #8a93a8;
+      margin-bottom: 28px; max-width: 400px;
+      animation: fadeUp .7s .2s ease both;
+    }
+    .hero-btns { display: flex; gap: 12px; animation: fadeUp .7s .3s ease both; }
+    .btn-play {
+      display: flex; align-items: center; gap: 9px;
+      background: #fff; color: #000; border: none; border-radius: 7px;
+      padding: 13px 28px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-play:hover { background: #d1d5db; transform: translateY(-2px); }
+    .btn-more {
+      display: flex; align-items: center; gap: 9px;
+      background: rgba(255,255,255,.1); color: var(--text); border: none; border-radius: 7px;
+      padding: 13px 24px; font-size: 14px; font-weight: 500; cursor: pointer;
+      backdrop-filter: blur(8px); transition: background .2s, transform .15s;
+    }
+    .btn-more:hover { background: rgba(255,255,255,.18); transform: translateY(-2px); }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; padding: 32px 48px 0; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 20px; border-radius: 100px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all .2s;
+    }
+    .tab:hover, .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* SECTIONS */
+    .section { padding: 44px 48px 0; }
+    .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .sec-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; }
+    .sec-title span { color: var(--accent); }
+    .see-all { font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 500; transition: opacity .2s; }
+    .see-all:hover { opacity: .7; }
+
+    /* ROW */
+    .row-wrap { position: relative; }
+    .row {
+      display: flex; gap: 13px; overflow-x: auto; padding-bottom: 14px;
+      scroll-snap-type: x mandatory; -ms-overflow-style: none; scrollbar-width: none;
+    }
+    .row::-webkit-scrollbar { display: none; }
+    .arr {
+      position: absolute; top: 50%; transform: translateY(-60%);
+      background: rgba(7,9,14,.9); border: 1px solid var(--border);
+      color: var(--text); border-radius: 50%; width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 5; font-size: 20px; line-height: 1;
+      opacity: 0; pointer-events: none; transition: opacity .2s, background .2s;
+    }
+    .row-wrap:hover .arr { opacity: 1; pointer-events: auto; }
+    .arr:hover { background: var(--accent); }
+    .arr.l { left: -14px; }
+    .arr.r { right: -14px; }
+
+    /* POSTER CARD */
+    .card {
+      flex: 0 0 175px; border-radius: 10px; overflow: hidden;
+      background: var(--card); cursor: pointer; position: relative;
+      scroll-snap-align: start; transition: transform .3s, box-shadow .3s;
+    }
+    .card:hover { transform: scale(1.07) translateY(-5px); box-shadow: 0 22px 55px rgba(0,0,0,.65); z-index: 3; }
+    .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: var(--border); }
+    .card-ov {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(7,9,14,.97) 0%, rgba(7,9,14,.2) 55%, transparent 100%);
+      opacity: 0; transition: opacity .3s;
+      display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;
+    }
+    .card:hover .card-ov { opacity: 1; }
+    .play-btn {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--accent); border: none;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 8px;
+      transition: transform .2s;
+    }
+    .play-btn:hover { transform: scale(1.15); }
+    .play-btn svg { width: 13px; height: 13px; fill: #fff; margin-left: 2px; }
+    .card-name { font-size: 12px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
+    .card-sub { font-size: 11px; color: var(--muted); display: flex; gap: 6px; }
+    .card-sub .s { color: var(--gold); }
+    .badge {
+      position: absolute; top: 8px; left: 8px;
+      background: var(--accent); color: #fff;
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      padding: 3px 7px; border-radius: 4px; text-transform: uppercase;
+    }
+    .badge.arc { background: #1a6b3c; }
+
+    /* ARCHIVE CARD (wider) */
+    .acard {
+      flex: 0 0 280px; height: 165px; border-radius: 10px; overflow: hidden;
+      background: var(--card); cursor: pointer; position: relative;
+      scroll-snap-align: start; transition: transform .3s, box-shadow .3s;
+    }
+    .acard:hover { transform: scale(1.04) translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,.6); }
+    .acard img { width: 100%; height: 100%; object-fit: cover; }
+    .acard-ov {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(7,9,14,.95) 0%, rgba(7,9,14,.3) 60%, transparent 100%);
+    }
+    .acard-info { position: absolute; bottom: 12px; left: 14px; right: 14px; }
+    .acard-title { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: .5px; margin-bottom: 4px; }
+    .acard-meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+    .acard-meta .s { color: var(--gold); }
+    .arc-badge {
+      position: absolute; top: 10px; right: 10px;
+      background: #1a6b3c; color: #fff;
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+    }
+
+    /* LOADING SKELETON */
+    .skeleton {
+      flex: 0 0 175px; border-radius: 10px; overflow: hidden;
+      background: var(--card); scroll-snap-align: start;
+    }
+    .skeleton-img {
+      width: 100%; aspect-ratio: 2/3;
+      background: linear-gradient(90deg, var(--card) 0%, var(--border) 50%, var(--card) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-wide {
+      flex: 0 0 280px; height: 165px; border-radius: 10px;
+      background: linear-gradient(90deg, var(--card) 0%, var(--border) 50%, var(--card) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      scroll-snap-align: start;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* PLAYER MODAL */
+    .backdrop {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.92); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+      padding: 20px;
+    }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .player-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      width: 100%; max-width: 920px;
+      transform: scale(.94) translateY(18px); transition: transform .3s;
+    }
+    .backdrop.open .player-modal { transform: scale(1) translateY(0); }
+    #player-frame {
+      width: 100%; aspect-ratio: 16/9; border: none; background: #000; display: block;
+    }
+    .player-info { padding: 22px 28px; }
+    .player-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .player-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; }
+    .close-btn {
+      background: var(--border); border: none; color: var(--text);
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0;
+    }
+    .close-btn:hover { background: var(--accent); }
+    .player-meta { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 12px; flex-wrap: wrap; }
+    .player-meta .star { color: var(--gold); font-weight: 600; }
+    .player-desc { font-size: 13px; line-height: 1.7; color: #8a93a8; margin-bottom: 18px; }
+    .player-src { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .src-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; display: inline-block; }
+
+    /* INFO MODAL */
+    .info-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      width: 100%; max-width: 820px;
+      transform: scale(.94) translateY(18px); transition: transform .3s;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .backdrop.open .info-modal { transform: scale(1) translateY(0); }
+    .info-backdrop-img {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;
+      position: relative;
+    }
+    .info-backdrop-wrap { position: relative; }
+    .info-backdrop-wrap::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%;
+      background: linear-gradient(to top, var(--surface), transparent);
+    }
+    .info-body { padding: 24px 28px 28px; }
+    .info-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .info-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; }
+    .info-meta { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 14px; flex-wrap: wrap; }
+    .info-desc { font-size: 14px; line-height: 1.75; color: #8a93a8; margin-bottom: 22px; }
+    .info-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 24px; border-radius: 8px; font-size: 13px;
+      z-index: 500; transition: transform .3s; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* FOOTER */
+    footer {
+      margin-top: 80px; border-top: 1px solid var(--border);
+      padding: 44px 48px 24px;
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 36px;
+      font-size: 13px; color: var(--muted);
+    }
+    .f-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px; }
+    .f-logo span { color: var(--text); }
+    .f-desc { line-height: 1.7; max-width: 230px; margin-bottom: 14px; }
+    .f-sources { display: flex; gap: 8px; flex-wrap: wrap; }
+    .f-src { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; }
+    footer h4 { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+    footer ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    footer ul li a { color: var(--muted); text-decoration: none; transition: color .2s; }
+    footer ul li a:hover { color: var(--text); }
+    .f-bottom { border-top: 1px solid var(--border); padding: 16px 48px; text-align: center; font-size: 12px; color: var(--muted); }
+
+    /* NOTICE */
+    .notice {
+      margin: 0 48px; padding: 14px 20px; border-radius: 10px;
+      background: rgba(230,57,70,.08); border: 1px solid rgba(230,57,70,.2);
+      font-size: 13px; color: #f87171; display: flex; gap: 10px; align-items: flex-start;
+      margin-top: 32px;
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 18px; }
+      .nav-links { display: none; }
+      .search-bar { display: none; }
+      .hero { padding: 0 22px 80px; }
+      .section { padding: 36px 18px 0; }
+      .tabs { padding: 24px 18px 0; }
+      footer { grid-template-columns: 1fr 1fr; padding: 32px 18px; }
+      .f-bottom { padding: 14px 18px; }
+      .notice { margin: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="logo" href="#"><span>CINE</span>STREAM</a>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Home</a></li>
+    <li><a href="#tmdb-section">Movies</a></li>
+    <li><a href="#archive-section">Classics</a></li>
+    <li><a href="#toprated-section">Top Rated</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="search-bar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search movies..." autocomplete="off"/>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div id="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-source-badge">🎬 Featured</div>
+    <h1 id="hero-title">Loading...</h1>
+    <div class="hero-meta">
+      <span class="star" id="hero-rating">★ —</span>
+      <span class="dot"></span>
+      <span id="hero-year">—</span>
+      <span class="dot"></span>
+      <span id="hero-genre">—</span>
+    </div>
+    <p id="hero-desc">Fetching movie details...</p>
+    <div class="hero-btns">
+      <button class="btn-play" id="hero-play-btn">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+        Watch Now
+      </button>
+      <button class="btn-more" id="hero-info-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        More Info
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- NOTICE -->
+<div class="notice">
+  ⚠️ <span>All movies are sourced from <strong>TMDB</strong> (metadata) + <strong>VidSrc.to</strong> (stream) and <strong>Archive.org</strong> (public domain classics). Streams open in the player below each card. No downloads, no signup required.</span>
+</div>
+
+<!-- GENRE TABS -->
+<div class="tabs" id="tabs">
+  <button class="tab active" data-genre="0">All</button>
+  <button class="tab" data-genre="28">Action</button>
+  <button class="tab" data-genre="18">Drama</button>
+  <button class="tab" data-genre="878">Sci-Fi</button>
+  <button class="tab" data-genre="27">Horror</button>
+  <button class="tab" data-genre="35">Comedy</button>
+  <button class="tab" data-genre="53">Thriller</button>
+  <button class="tab" data-genre="16">Animation</button>
+</div>
+
+<!-- NOW PLAYING -->
+<section class="section" id="tmdb-section" style="margin-top:36px;">
+  <div class="sec-header">
+    <h2 class="sec-title">Now <span>Playing</span></h2>
+    <a href="#" class="see-all">Browse All</a>
+  </div>
+  <div class="row-wrap">
+    <button class="arr l" onclick="scroll_row(this,-1)">&#8249;</button>
+    <div class="row" id="row-now"></div>
+    <button class="arr r" onclick="scroll_row(this,1)">&#8250;</button>
+  </div>
+</section>
+
+<!-- POPULAR -->
+<section class="section" style="margin-top:46px;">
+  <div class="sec-header">
+    <h2 class="sec-title">Popular <span>Movies</span></h2>
+    <a href="#" class="see-all">Browse All</a>
+  </div>
+  <div class="row-wrap">
+    <button class="arr l" onclick="scroll_row(this,-1)">&#8249;</button>
+    <div class="row" id="row-popular"></div>
+    <button class="arr r" onclick="scroll_row(this,1)">&#8250;</button>
+  </div>
+</section>
+
+<!-- TOP RATED -->
+<section class="section" id="toprated-section" style="margin-top:46px;">
+  <div class="sec-header">
+    <h2 class="sec-title">Top <span>Rated</span></h2>
+    <a href="#" class="see-all">Browse All</a>
+  </div>
+  <div class="row-wrap">
+    <button class="arr l" onclick="scroll_row(this,-1)">&#8249;</button>
+    <div class="row" id="row-top"></div>
+    <button class="arr r" onclick="scroll_row(this,1)">&#8250;</button>
+  </div>
+</section>
+
+<!-- ARCHIVE CLASSICS -->
+<section class="section" id="archive-section" style="margin-top:46px; padding-bottom: 0;">
+  <div class="sec-header">
+    <h2 class="sec-title">Archive.org <span>Free Classics</span></h2>
+    <a href="https://archive.org/details/movies" target="_blank" class="see-all">View on Archive →</a>
+  </div>
+  <div class="row-wrap">
+    <button class="arr l" onclick="scroll_row(this,-1)">&#8249;</button>
+    <div class="row" id="row-archive"></div>
+    <button class="arr r" onclick="scroll_row(this,1)">&#8250;</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="f-logo"><span>CINE</span>STREAM</div>
+    <p class="f-desc">Free movies from trusted public sources. No sign-up. No subscription.</p>
+    <div class="f-sources">
+      <span class="f-src">TMDB API</span>
+      <span class="f-src">VidSrc.to</span>
+      <span class="f-src">Archive.org</span>
+    </div>
+  </div>
+  <div>
+    <h4>Browse</h4>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#tmdb-section">Movies</a></li>
+      <li><a href="#archive-section">Classics</a></li>
+      <li><a href="#toprated-section">Top Rated</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>Genres</h4>
+    <ul>
+      <li><a href="#">Action</a></li>
+      <li><a href="#">Drama</a></li>
+      <li><a href="#">Sci-Fi</a></li>
+      <li><a href="#">Horror</a></li>
+      <li><a href="#">Comedy</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>Sources</h4>
+    <ul>
+      <li><a href="https://www.themoviedb.org" target="_blank">TMDB</a></li>
+      <li><a href="https://vidsrc.to" target="_blank">VidSrc</a></li>
+      <li><a href="https://archive.org/details/movies" target="_blank">Archive.org</a></li>
+      <li><a href="https://pages.github.com" target="_blank">GitHub Pages</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="f-bottom">&#169; 2026 CineStream &#8212; Powered by TMDB API, VidSrc.to &amp; Archive.org. For educational use only.</div>
+
+<!-- PLAYER MODAL -->
+<div class="backdrop" id="player-backdrop" onclick="handleBD(event,'player-backdrop')">
+  <div class="player-modal">
+    <iframe id="player-frame" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    <div class="player-info">
+      <div class="player-top">
+        <div class="player-title" id="p-title"></div>
+        <button class="close-btn" onclick="closePlayer()">&#10005;</button>
+      </div>
+      <div class="player-meta">
+        <span class="star" id="p-rating"></span>
+        <span id="p-year"></span>
+        <span id="p-genre"></span>
+      </div>
+      <p class="player-desc" id="p-desc"></p>
+      <div class="player-src"><span class="src-dot"></span><span id="p-src">Streaming via VidSrc.to</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="backdrop" id="info-backdrop" onclick="handleBD(event,'info-backdrop')">
+  <div class="info-modal">
+    <div class="info-backdrop-wrap">
+      <img class="info-backdrop-img" id="i-backdrop" src="" alt=""/>
+    </div>
+    <div class="info-body">
+      <div class="info-top">
+        <div class="info-title" id="i-title"></div>
+        <button class="close-btn" onclick="closeInfo()">&#10005;</button>
+      </div>
+      <div class="info-meta">
+        <span style="color:var(--gold);font-weight:600;" id="i-rating"></span>
+        <span id="i-year"></span>
+        <span id="i-genre"></span>
+        <span id="i-runtime"></span>
+      </div>
+      <p class="info-desc" id="i-desc"></p>
+      <div class="info-actions">
+        <button class="btn-play" id="i-play-btn" style="font-size:13px;padding:11px 22px;">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Watch Now
+        </button>
+        <button class="btn-more" onclick="closeInfo()" style="font-size:13px;padding:11px 18px;">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const TMDB_KEY  = '8265bd1679663a7ea12ac168da84d2e8';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const IMG_BASE  = 'https://image.tmdb.org/t/p/';
+const VIDSRC    = 'https://vidsrc.to/embed/movie/';
+
+const GENRE_MAP = {28:'Action',12:'Adventure',16:'Animation',35:'Comedy',80:'Crime',18:'Drama',10751:'Family',14:'Fantasy',27:'Horror',9648:'Mystery',10749:'Romance',878:'Sci-Fi',53:'Thriller',10752:'War',37:'Western'};
+
+let heroMovie = null;
+let currentGenre = 0;
+let infoData = null;
+
+// ── FALLBACK MOVIE DATA (shown instantly, no API needed) ──
+const FALLBACK_NOW = [
+  {id:695721,title:"The Hunger Games: The Ballad of Songbirds & Snakes",release_date:"2023-11-17",vote_average:7.0,genre_ids:[28,12,878],poster_path:"/mBaXZ95R2OxueZhvQbcEWy2DqyO.jpg",overview:"64 years before he becomes the tyrannical President Snow, 18-year-old Coriolanus Snow is the last hope for his fading lineage."},
+  {id:872585,title:"Oppenheimer",release_date:"2023-07-19",vote_average:8.4,genre_ids:[18,36],poster_path:"/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",overview:"The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II."},
+  {id:346698,title:"Barbie",release_date:"2023-07-19",vote_average:7.1,genre_ids:[35,12,14],poster_path:"/iuFNMS8vlzmfa3S1iBNhH4HjPjA.jpg",overview:"Barbie and Ken are having the time of their lives in the colorful and seemingly perfect world of Barbie Land."},
+  {id:569094,title:"Spider-Man: Across the Spider-Verse",release_date:"2023-05-31",vote_average:8.7,genre_ids:[16,28,12],poster_path:"/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",overview:"Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence."},
+  {id:758323,title:"The Pope's Exorcist",release_date:"2023-04-05",vote_average:6.8,genre_ids:[27,53],poster_path:"/dUB7ZQNaOJ4DV4GTWHXPjkbv2s8.jpg",overview:"Father Gabriele Amorth, Chief Exorcist of the Vatican, investigates a young boy's possession and uncovers a conspiracy the Church has tried to keep secret."},
+  {id:385687,title:"Fast X",release_date:"2023-05-17",vote_average:7.2,genre_ids:[28,80,12],poster_path:"/fiVW06jE7z9YnO4trhaMEdYTpo9.jpg",overview:"Dom Toretto and his family are targeted by the son of drug kingpin Hernan Reyes, a man who wants to exact revenge on Dom."},
+  {id:667538,title:"Transformers: Rise of the Beasts",release_date:"2023-06-06",vote_average:6.2,genre_ids:[28,12,878],poster_path:"/gPbM0MK8CP8A174rmUwGsADNYKD.jpg",overview:"During the '90s, a new faction of Transformers — the Maximals — join the Autobots as allies in the battle for Earth."},
+  {id:447365,title:"Guardians of the Galaxy Vol. 3",release_date:"2023-05-03",vote_average:8.0,genre_ids:[28,12,878],poster_path:"/r2J02Z2OpNTctfOSN1Ydgii51I3.jpg",overview:"Still reeling from the loss of Gamora, Peter Quill rallies his team to defend the universe."},
+];
+const FALLBACK_POPULAR = [
+  {id:1022789,title:"Inside Out 2",release_date:"2024-06-11",vote_average:7.7,genre_ids:[16,10751,35],poster_path:"/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg",overview:"Follow Riley in her teenage years as new Emotions arrive in Headquarters."},
+  {id:653346,title:"Kingdom of the Planet of the Apes",release_date:"2024-05-08",vote_average:6.9,genre_ids:[878,28,12],poster_path:"/gKkl37BQuKTanygYQG1pyYgLVgf.jpg",overview:"Many years after the reign of Caesar, a young ape goes on a journey that will lead him to question everything he's been taught."},
+  {id:573435,title:"Bad Boys: Ride or Die",release_date:"2024-05-31",vote_average:7.0,genre_ids:[28,80,35],poster_path:"/oGythE98MYleE6mZlTs5q5HWqiB.jpg",overview:"Miami detectives Mike Lowrey and Marcus Burnett are now on the run after being framed as dirty cops."},
+  {id:519182,title:"Despicable Me 4",release_date:"2024-07-03",vote_average:6.7,genre_ids:[16,35,10751],poster_path:"/wWba3TaojhK7NdycyUk0iDFBmgu.jpg",overview:"Gru and Lucy and their girls — Margo, Edith and Agnes — welcome a new member to the family."},
+  {id:748783,title:"The Garfield Movie",release_date:"2024-05-23",vote_average:6.7,genre_ids:[16,35,12],poster_path:"/xYduFGuch9OwbCOEUiamml18ZoB.jpg",overview:"Garfield, the world-famous, Monday-hating, lasagna-loving indoor cat, is about to have a wild outdoor adventure."},
+  {id:150540,title:"Inside Out",release_date:"2015-06-17",vote_average:8.1,genre_ids:[16,35,18],poster_path:"/2H1TmgdfNtsKlU9jKdeNyYL5y8T.jpg",overview:"Growing up can be a bumpy road, and it's no exception for Riley, who is uprooted from her Midwest life when her father starts a new job in San Francisco."},
+  {id:945961,title:"Alien: Romulus",release_date:"2024-08-13",vote_average:7.2,genre_ids:[27,878,28],poster_path:"/b33nnKl1GSFbao4l3fZDDqsMx0F.jpg",overview:"A group of young people on a distant planet face the most terrifying life form in the universe."},
+  {id:533535,title:"Deadpool & Wolverine",release_date:"2024-07-24",vote_average:7.8,genre_ids:[28,35,878],poster_path:"/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",overview:"Deadpool is recruited by the TVA and reluctantly teams up with Wolverine to prevent a multiversal threat."},
+];
+const FALLBACK_TOP = [
+  {id:278,title:"The Shawshank Redemption",release_date:"1994-09-23",vote_average:8.7,genre_ids:[18,80],poster_path:"/lyQBXzOQSuE59IsHyhrp0qIiPAz.jpg",overview:"Framed in the 1940s for the double murder of his wife and her lover, upstanding banker Andy Dufresne begins a new life at the Shawshank prison."},
+  {id:238,title:"The Godfather",release_date:"1972-03-14",vote_average:8.7,genre_ids:[18,80],poster_path:"/3bhkrj58Vtu7enYsLLeQiDR9mCH.jpg",overview:"The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son."},
+  {id:424,title:"Schindler's List",release_date:"1993-11-29",vote_average:8.6,genre_ids:[18,36,10752],poster_path:"/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",overview:"The true story of how businessman Oskar Schindler saved over a thousand Jewish lives from the Nazis during World War II."},
+  {id:389,title:"12 Angry Men",release_date:"1957-04-10",vote_average:8.5,genre_ids:[18],poster_path:"/ow3wq89wM8qd5X7hWKxiRfsFf9C.jpg",overview:"The jury in a New York City murder trial is frustrated by a single member whose skeptical caution forces them to question everything."},
+  {id:496243,title:"Parasite",release_date:"2019-05-30",vote_average:8.5,genre_ids:[35,53,18],poster_path:"/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",overview:"All unemployed, Ki-taek's family takes peculiar interest in the wealthy and glamorous Park family and starts to infiltrate their lives one by one."},
+  {id:372058,title:"Your Name",release_date:"2016-08-26",vote_average:8.4,genre_ids:[16,18,10749],poster_path:"/q719jXXEzOoYaps6babgKnONONX.jpg",overview:"Two teenagers share a profound, magical connection upon discovering they are swapping bodies."},
+  {id:429,title:"The Good, the Bad and the Ugly",release_date:"1966-12-23",vote_average:8.4,genre_ids:[37],poster_path:"/bX2xnavhMYjWDoZp1VM6VnU1xwe.jpg",overview:"A bounty hunting scam joins two men in an uneasy alliance against a third in a race to find a fortune in gold buried in a remote cemetery."},
+  {id:680,title:"Pulp Fiction",release_date:"1994-09-10",vote_average:8.5,genre_ids:[53,18],poster_path:"/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg",overview:"The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption."},
+];
+
+// ── SKELETON LOADERS ──
+function skeletons(id, count, wide=false) {
+  const row = document.getElementById(id);
+  row.innerHTML = Array(count).fill(wide ? '<div class="skeleton-wide"></div>' : '<div class="skeleton"><div class="skeleton-img"></div></div>').join('');
+}
+
+// ── TMDB FETCH ──
+async function tmdb(path, params='') {
+  const r = await fetch(`${TMDB_BASE}${path}?api_key=${TMDB_KEY}&language=en-US${params}`);
+  return r.json();
+}
+
+// ── GENRE LABEL ──
+function genreLabel(ids) {
+  if (!ids || !ids.length) return '—';
+  return (ids.slice(0,2).map(id => GENRE_MAP[id]).filter(Boolean).join(', ')) || '—';
+}
+
+// ── POSTER CARD HTML ──
+function posterCard(m, source='tmdb') {
+  const poster = m.poster_path ? `${IMG_BASE}w342${m.poster_path}` : 'https://via.placeholder.com/175x263/111520/444?text=No+Image';
+  const rating = m.vote_average ? m.vote_average.toFixed(1) : '—';
+  const year   = m.release_date ? m.release_date.slice(0,4) : '—';
+  const genre  = genreLabel(m.genre_ids || (m.genres ? m.genres.map(g=>g.id) : []));
+  const isArc  = source === 'archive';
+  return `<div class="card" onclick="${isArc ? `playArchive(${JSON.stringify(m).replace(/"/g,'&quot;')})` : `openInfo(${m.id})`}">
+    <div class="badge ${isArc?'arc'}">${isArc ? 'FREE' : 'STREAM'}</div>
+    <img src="${poster}" alt="${m.title||m.name||''}" loading="lazy" onerror="this.src='https://via.placeholder.com/175x263/111520/444?text=No+Poster'"/>
+    <div class="card-ov">
+      <button class="play-btn"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></button>
+      <div class="card-name">${m.title||m.name||'Unknown'}</div>
+      <div class="card-sub"><span class="s">&#9733; ${rating}</span><span>${year}</span></div>
+    </div>
+  </div>`;
+}
+
+// ── LOAD ROWS ──
+async function loadRow(id, endpoint, params='', fallback=[]) {
+  if (fallback.length) {
+    document.getElementById(id).innerHTML = fallback.map(m => posterCard(m)).join('');
+  } else {
+    skeletons(id, 8);
+  }
+  try {
+    const data = await tmdb(endpoint, params);
+    const items = data.results || [];
+    if (items.length) {
+      document.getElementById(id).innerHTML = items.map(m => posterCard(m)).join('');
+    }
+  } catch(e) {
+    console.warn('API fetch failed, using fallback:', e);
+  }
+}
+
+// ── ARCHIVE.ORG CLASSICS ──
+const archiveMovies = [
+  { id:'Metropolis_1927', title:'Metropolis', year:'1927', rating:'8.3', thumb:'https://archive.org/services/img/Metropolis_1927', embed:'https://archive.org/embed/Metropolis_1927', desc:'Fritz Lang\'s landmark sci-fi masterpiece about a futuristic city divided between the elite and the workers.' },
+  { id:'nosferatu', title:'Nosferatu (1922)', year:'1922', rating:'7.9', thumb:'https://archive.org/services/img/nosferatu', embed:'https://archive.org/embed/nosferatu', desc:'The original vampire horror film — a chilling, expressionist silent masterpiece.' },
+  { id:'CharlieChapin_TheKid', title:'The Kid (1921)', year:'1921', rating:'8.2', thumb:'https://archive.org/services/img/CharlieChapin_TheKid', embed:'https://archive.org/embed/CharlieChapin_TheKid', desc:'Charlie Chaplin\'s first feature film — a comedy-drama about a tramp who raises an abandoned child.' },
+  { id:'night_of_the_living_dead', title:'Night of the Living Dead', year:'1968', rating:'7.9', thumb:'https://archive.org/services/img/night_of_the_living_dead', embed:'https://archive.org/embed/night_of_the_living_dead', desc:'George Romero\'s groundbreaking zombie horror that defined an entire genre.' },
+  { id:'TheBirthOfANation', title:'Birth of a Nation', year:'1915', rating:'6.3', thumb:'https://archive.org/services/img/TheBirthOfANation', embed:'https://archive.org/embed/TheBirthOfANation', desc:'D.W. Griffith\'s controversial and historically significant silent epic.' },
+  { id:'the_general_1926', title:'The General (1926)', year:'1926', rating:'8.1', thumb:'https://archive.org/services/img/the_general_1926', embed:'https://archive.org/embed/the_general_1926', desc:'Buster Keaton\'s hilarious and breathtaking Civil War comedy-adventure.' },
+  { id:'HaxanWitchcraftThroughTheAges', title:'Haxan (1922)', year:'1922', rating:'7.5', thumb:'https://archive.org/services/img/HaxanWitchcraftThroughTheAges', embed:'https://archive.org/embed/HaxanWitchcraftThroughTheAges', desc:'A Swedish-Danish horror documentary about witchcraft through the ages.' },
+  { id:'Sherlock_Jr_1924', title:'Sherlock Jr. (1924)', year:'1924', rating:'8.1', thumb:'https://archive.org/services/img/Sherlock_Jr_1924', embed:'https://archive.org/embed/Sherlock_Jr_1924', desc:'Buster Keaton\'s meta comedy about a projectionist who dreams of being a detective.' },
+];
+
+function renderArchive() {
+  const row = document.getElementById('row-archive');
+  row.innerHTML = archiveMovies.map(m => `
+    <div class="acard" onclick="playArchiveById('${m.id}')">
+      <div class="arc-badge">FREE</div>
+      <img src="${m.thumb}" alt="${m.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/280x165/111520/444?text=${encodeURIComponent(m.title)}'"/>
+      <div class="acard-ov"></div>
+      <div class="acard-info">
+        <div class="acard-title">${m.title}</div>
+        <div class="acard-meta"><span class="s">&#9733; ${m.rating}</span><span>${m.year}</span><span>Archive.org</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function playArchiveById(id) {
+  const m = archiveMovies.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('p-title').textContent   = m.title;
+  document.getElementById('p-rating').textContent  = '★ ' + m.rating;
+  document.getElementById('p-year').textContent    = m.year;
+  document.getElementById('p-genre').textContent   = 'Classic Cinema';
+  document.getElementById('p-desc').textContent    = m.desc;
+  document.getElementById('p-src').textContent     = 'Streaming via Archive.org (Public Domain)';
+  document.getElementById('player-frame').src      = m.embed;
+  document.getElementById('player-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// ── OPEN INFO MODAL ──
+async function openInfo(tmdbId) {
+  document.getElementById('info-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('i-title').textContent = 'Loading...';
+  document.getElementById('i-desc').textContent  = '';
+  document.getElementById('i-backdrop').src = '';
+  try {
+    const m = await tmdb(`/movie/${tmdbId}`);
+    infoData = m;
+    document.getElementById('i-backdrop').src    = m.backdrop_path ? `${IMG_BASE}w780${m.backdrop_path}` : (m.poster_path ? `${IMG_BASE}w780${m.poster_path}` : '');
+    document.getElementById('i-title').textContent   = m.title;
+    document.getElementById('i-rating').textContent  = '★ ' + (m.vote_average ? m.vote_average.toFixed(1) : '—');
+    document.getElementById('i-year').textContent    = m.release_date ? m.release_date.slice(0,4) : '—';
+    document.getElementById('i-genre').textContent   = m.genres ? m.genres.slice(0,2).map(g=>g.name).join(', ') : '—';
+    document.getElementById('i-runtime').textContent = m.runtime ? `${Math.floor(m.runtime/60)}h ${m.runtime%60}m` : '';
+    document.getElementById('i-desc').textContent    = m.overview || 'No description available.';
+    document.getElementById('i-play-btn').onclick    = () => { closeInfo(); playTMDB(m); };
+  } catch(e) {
+    document.getElementById('i-title').textContent = 'Failed to load details.';
+  }
+}
+
+function closeInfo() {
+  document.getElementById('info-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── PLAY TMDB MOVIE via VidSrc ──
+function playTMDB(m) {
+  const url = `${VIDSRC}${m.id}`;
+  document.getElementById('p-title').textContent   = m.title;
+  document.getElementById('p-rating').textContent  = '★ ' + (m.vote_average ? m.vote_average.toFixed(1) : '—');
+  document.getElementById('p-year').textContent    = m.release_date ? m.release_date.slice(0,4) : '—';
+  document.getElementById('p-genre').textContent   = m.genres ? m.genres.slice(0,2).map(g=>g.name).join(', ') : (genreLabel(m.genre_ids));
+  document.getElementById('p-desc').textContent    = m.overview || '';
+  document.getElementById('p-src').textContent     = 'Streaming via VidSrc.to';
+  document.getElementById('player-frame').src      = url;
+  document.getElementById('player-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePlayer() {
+  document.getElementById('player-frame').src = '';
+  document.getElementById('player-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleBD(e, id) {
+  if (e.target === document.getElementById(id)) {
+    if (id === 'player-backdrop') closePlayer();
+    else closeInfo();
+  }
+}
+
+// ── HERO ──
+async function loadHero(fallbackMovies) {
+  // Show fallback hero instantly
+  const fb = fallbackMovies[Math.floor(Math.random() * 3)];
+  setHero(fb);
+  try {
+    const data = await tmdb('/movie/now_playing', '&page=1');
+    const movies = data.results || [];
+    if (movies.length) {
+      const m = movies[Math.floor(Math.random() * Math.min(5, movies.length))];
+      setHero(m);
+    }
+  } catch(e) { console.warn('Hero load failed', e); }
+}
+
+function setHero(m) {
+  heroMovie = m;
+  document.getElementById('hero-bg').style.backgroundImage = m.backdrop_path ? `url(${IMG_BASE}original${m.backdrop_path})` : '';
+  document.getElementById('hero-title').textContent   = m.title;
+  document.getElementById('hero-rating').textContent  = '★ ' + (m.vote_average ? m.vote_average.toFixed(1) : '—');
+  document.getElementById('hero-year').textContent    = m.release_date ? m.release_date.slice(0,4) : '—';
+  document.getElementById('hero-genre').textContent   = genreLabel(m.genre_ids);
+  document.getElementById('hero-desc').textContent    = m.overview ? (m.overview.length > 180 ? m.overview.slice(0,180)+'…' : m.overview) : '';
+  document.getElementById('hero-play-btn').onclick    = () => openInfo(m.id);
+  document.getElementById('hero-info-btn').onclick    = () => openInfo(m.id);
+}
+
+// ── GENRE FILTER ──
+document.getElementById('tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentGenre = tab.dataset.genre;
+  const gParam = currentGenre == 0 ? '' : `&with_genres=${currentGenre}`;
+  const fbNow  = currentGenre == 0 ? FALLBACK_NOW     : FALLBACK_NOW.filter(m => m.genre_ids.includes(+currentGenre));
+  const fbPop  = currentGenre == 0 ? FALLBACK_POPULAR : FALLBACK_POPULAR.filter(m => m.genre_ids.includes(+currentGenre));
+  const fbTop  = currentGenre == 0 ? FALLBACK_TOP     : FALLBACK_TOP.filter(m => m.genre_ids.includes(+currentGenre));
+  loadRow('row-now',     '/movie/now_playing', gParam, fbNow);
+  loadRow('row-popular', '/movie/popular',     gParam, fbPop);
+  loadRow('row-top',     '/movie/top_rated',   gParam, fbTop);
+});
+
+// ── SEARCH ──
+let searchTimeout;
+document.getElementById('search-input').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  const q = e.target.value.trim();
+  if (!q) {
+    loadRow('row-now',     '/movie/now_playing');
+    loadRow('row-popular', '/movie/popular');
+    return;
+  }
+  searchTimeout = setTimeout(async () => {
+    skeletons('row-now', 8);
+    skeletons('row-popular', 8);
+    try {
+      const data = await tmdb('/search/movie', `&query=${encodeURIComponent(q)}&page=1`);
+      const items = data.results || [];
+      const html  = items.map(m => posterCard(m)).join('') || '<p style="color:var(--muted);padding:20px;">No results found.</p>';
+      document.getElementById('row-now').innerHTML     = html;
+      document.getElementById('row-popular').innerHTML = '';
+      document.querySelector('#tmdb-section .sec-title').innerHTML = `Search <span>Results</span>`;
+    } catch(e) { console.warn(e); }
+  }, 400);
+});
+
+// ── ROW SCROLL ──
+function scroll_row(btn, dir) {
+  const row = btn.closest('.row-wrap').querySelector('.row');
+  row.scrollBy({ left: dir * 420, behavior: 'smooth' });
+}
+
+// ── NAV SCROLL ──
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', scrollY > 40);
+});
+
+// ── ESC KEY ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closePlayer(); closeInfo(); }
+});
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── INIT ──
+(async () => {
+  loadHero(FALLBACK_NOW);
+  loadRow('row-now',     '/movie/now_playing', '', FALLBACK_NOW);
+  loadRow('row-popular', '/movie/popular',     '', FALLBACK_POPULAR);
+  loadRow('row-top',     '/movie/top_rated',   '', FALLBACK_TOP);
+  renderArchive();
+})();
+</script>
+</body>
+</html>
